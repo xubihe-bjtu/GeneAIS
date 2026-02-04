@@ -211,20 +211,20 @@ class Frequency_Aware_Delay_Attn(nn.Module):
         self.d_model = args.d_model
         self.M = M
         self.pred_len = args.pre_len
-        # 复数操作
+
         self.relu=ComplexReLU()
         self.complex_dropout = ComplexDropout(0.1)
         self.layernorm=ComplexLayerNorm(self.d_model)
         self.sigmoid=ComplexSigmoid()
-        # 1. 改进的频域模板初始化
+
         self.temp_real = nn.Parameter(torch.randn(M, self.seq_len))
         self.temp_imag = nn.Parameter(torch.randn(M, self.seq_len))
 
-        # 2. 添加层归一化
+
         self.layernorm1 = nn.LayerNorm(self.d_model)
         self.layernorm2 = nn.LayerNorm(self.d_model)
 
-        # 3. 改进的投影层，添加残差连接
+
         self.fc1 = nn.Linear(self.seq_len, self.d_model).to(torch.cfloat)
         self.fc2 = nn.Linear(self.d_model, self.d_model).to(torch.cfloat)
         self.fc3 = nn.Linear(self.d_model, self.seq_len).to(torch.cfloat)
@@ -234,7 +234,7 @@ class Frequency_Aware_Delay_Attn(nn.Module):
         # 4. 添加门控机制
         self.gate = nn.Linear(self.d_model * 2, self.d_model).to(torch.cfloat)
 
-        # 5. 改进的注意力机制
+
         self.real_attn = Improved_Complex_Attention(args, M)
         self.imag_attn = Improved_Complex_Attention(args, M)
 
@@ -246,7 +246,6 @@ class Frequency_Aware_Delay_Attn(nn.Module):
             nn.Linear(4 * self.pred_len, self.pred_len)
         )
 
-        # 7. 频域权重学习
         self.freq_weights = nn.Parameter(torch.ones(self.seq_len))
         self.dropout = nn.Dropout(0.1)
 
@@ -257,11 +256,9 @@ class Frequency_Aware_Delay_Attn(nn.Module):
             nn.init.xavier_uniform_(module.weight)
             nn.init.zeros_(module.bias)
 
-        # 频域模板初始化
         nn.init.normal_(self.temp_real, mean=0.0, std=0.02)
         nn.init.normal_(self.temp_imag, mean=0.0, std=0.02)
 
-        # 频域权重初始化
         nn.init.constant_(self.freq_weights, 1.0)
 
     def forward(self, xp):
@@ -376,7 +373,7 @@ class Geo_Aware_Attn(nn.Module):
         self.d_mark = 16
         self.pred_len = args.pre_len
         self.in_dim = args.in_dim
-        self.distance_scale = nn.Parameter(torch.tensor(2.0))  # 距离缩放参数
+        self.distance_scale = nn.Parameter(torch.tensor(2.0))
 
         # 数据相关性编码层
         self.d_model = args.d_model
@@ -400,30 +397,23 @@ class Geo_Aware_Attn(nn.Module):
         nodevec1 = F.normalize(emb1, p=2, dim=1)
         nodevec2 = F.normalize(emb2, p=2, dim=1)
 
-        # 计算特征相似度
         geo_sim = torch.mm(nodevec1, nodevec2.T)
 
-        # 计算地理距离（欧氏距离）
         lat = csta_tensor[:, 0]
         lon = csta_tensor[:, 1]
 
-        # 向量化计算距离矩阵
         lat_diff = lat.unsqueeze(1) - lat.unsqueeze(0)
         lon_diff = lon.unsqueeze(1) - lon.unsqueeze(0)
         dist = torch.sqrt(lat_diff ** 2 + lon_diff ** 2 + 1e-8)
 
-        # 更温和的距离相似度（距离越远相似度越低）
         distance_scale = torch.sigmoid(self.distance_scale) * 3
         dist_sim = torch.exp(-dist * distance_scale)
 
-        # 结合方式：加权平均（避免乘法导致过度稀疏）
         combined_sim = geo_sim * 0.6 + dist_sim * 0.4
 
-        # 添加全局连接基准（避免过度稀疏）
-        global_bias = 0.05  # 小量全局连接
+        global_bias = 0.05
         combined_sim = combined_sim + global_bias
 
-        # 确保对称性
         combined_sim = (combined_sim + combined_sim.T) / 2
 
         return combined_sim
@@ -432,7 +422,6 @@ class Geo_Aware_Attn(nn.Module):
     def forward(self, x_t, x, csta, cpan):
         B, D, N, L = x.shape
 
-        # 2. 地理图计算
         def robust_min_max_normalization(csta, cpan):
             lat_values = cpan[:, :, 0]
             lon_values = cpan[:, :, 1]
