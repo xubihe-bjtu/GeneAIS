@@ -1,11 +1,11 @@
 import torch.optim as optim
 from scripts.metric import *
-from models import GeneAIS
+from models import GenAISF
 from scripts.utils import *
 
 class Trainer():
     def __init__(self,args,predefined_A,target_scaler):
-        self.model_dict = {'GeneAIS':GeneAIS}
+        self.model_dict = {'GenAISF':GenAISF}
         self.predefined_A = predefined_A
 
         target_list = ['u', 'v', 'msl', 'tmp']
@@ -94,7 +94,7 @@ class Trainer():
             matrix=torch.stack(matrix_ls,dim=0)#B,N_train,N_train
             obs_his_input=obs_his2*data_ones
             batch_random_nodes=np.stack(random_recoder,axis=0)
-            if self.model_type=='GeneAIS':
+            if self.model_type=='GenAISF':
                 output,hat_p = self.model(obs_his=obs_his_input,
                                     pan_fut=pan_fut,
                                     csta=csta2,
@@ -132,7 +132,7 @@ class Trainer():
                     l1_regularization += torch.norm(param, 1)
                 loss=loss+0.0001*l1_regularization
         elif self.train_type=='Normal' or self.train_type=='ST':
-            if self.model_type=='GeneAIS':
+            if self.model_type=='GenAISF':
                 output,hat_p = self.model(obs_his=obs_his,
                                     pan_fut=pan_fut,
                                     csta=csta,
@@ -232,7 +232,7 @@ class Trainer():
         if self.train_type=='Kriging':
             valid_mx=self.val_mx
             real_index=np.arange(self.valid_all_index.shape[0])
-            if self.model_type=='GeneAIS':
+            if self.model_type=='GenAISF':
                 output,hat_p = self.model(obs_his=obs_his,
                                     pan_fut=pan_fut,
                                     csta=csta,
@@ -262,7 +262,7 @@ class Trainer():
                 real = obs_fut[:,:,:,self.target].to(predict.device)
                 loss = self.loss(predict, real, 0.0)
         elif self.train_type=='Normal':
-            if self.model_type=='GeneAIS':
+            if self.model_type=='GenAISF':
                 output,hat_p = self.model(obs_his=obs_his,
                                     pan_fut=pan_fut,
                                     csta=csta,
@@ -348,7 +348,7 @@ class Trainer():
             if self.train_type=='Kriging':
                 test_mx=self.test_mx
                 real_index=np.arange(self.test_all_index.shape[0])
-                if self.model_type=='GeneAIS':
+                if self.model_type=='GenAISF':
                     output ,_= self.model(obs_his=obs_his,
                                         pan_fut=pan_fut,
                                         csta=csta,
@@ -373,7 +373,7 @@ class Trainer():
                                         train=False)
                     preds=output.unsqueeze(1).transpose(-1, -2)#B,1,N,L
             elif self.train_type=='Normal':
-                if self.model_type=='GeneAIS':
+                if self.model_type=='GenAISF':
                     preds,_ = test_model(obs_his=obs_his,
                                        pan_fut=pan_fut,
                                        csta=csta,

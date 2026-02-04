@@ -15,7 +15,7 @@ pip install -r requirements.txt
 ~~~
 
 2. **Prepare Data**: You can obtain the three well-preprocessed datasets—`ChinaNorth`, `ChinaSouth`, and `US_r3`—from the following [Google Drive](https://drive.google.com/drive/folders/1cusG3muIFew5c1FLZWWI-O4cZHNBLI4H). After downloading, place the datasets in the `./dataset` folder.
-3. To train and evaluate the model, simply execute the following examples within the `GeneAIS/Runner` directory. The `target` parameter specifies the weather variable of interest: 0 for U-speed, 1 for V-speed, 2 for MSL, and 3 for TMP.
+3. To train and evaluate the model, simply execute the following examples within the `GenAISF/Runner` directory. The `target` parameter specifies the weather variable of interest: 0 for U-speed, 1 for V-speed, 2 for MSL, and 3 for TMP.
 
 ~~~
 #ChinaNorth
